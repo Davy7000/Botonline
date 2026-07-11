@@ -248,6 +248,18 @@
     a {
       text-decoration: none;
     }
+    
+    #musique{
+      background-image: url('/kaliclose.jpeg');
+      background-size: cover;
+      color: #fff;
+      font-weight: bolder;
+    }
+    .colo{
+      background: url('/kaliclose.jpeg');
+      transition: 3s;
+    }
+   
   </style>
 </head>
 <body>
@@ -266,8 +278,30 @@
 
     <div class="toggle-container">
         <div onclick="window.location.href='https://session.rgnk.site/pairing-code'" target="_blank" class="toggle-option active" data-mode="pair"><i class="fas fa-key"></i> Pair Code</div>
-       <div onclick="window.location.href='https://session.rgnk.site/qr-code'"class="toggle-option" data-mode="qr"><i class="fas fa-qrcode"></i> QR Code</div>
+<!-- ancien emplacement du qr -->
+       <div class="toggle-option" id="musique"><i class="fa-solid fa-play"></i> Listening</div> <br>
+<!-- nouvel emplacement du qr -->
+  <div onclick="window.location.href='https://session.rgnk.site/qr-code'"class="toggle-option" data-mode="qr"><i class="fas fa-qrcode"></i> QR Code</div>
+
     </div>
-      
+      <script>
+        // ajout de la musique play
+        const play = document.getElementById('musique');
+        const bd = document.querySelector('body');
+        const para = document.querySelector('h1');
+
+        const ring = () => {
+          const audio = new Audio();
+          audio.src = "audio/Lil_Baby_-_Dream_Chaser__Official_Music_Video_(256k).mp3";
+          audio.play();
+        }
+
+        play.addEventListener('click', () => {
+          ring();
+          bd.classList.add('colo');
+          para.textContent='Twilight-x the king!';
+          
+        })
+      </script>
 </body>
 </html>
