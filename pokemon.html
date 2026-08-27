@@ -29,7 +29,6 @@
       input {
         width: 70%;
         height: 5vh;
-        border: none;
         font-weight: bolder;
         outline: none;
         font-size: calc(0.5rem + 1.1vh);
@@ -83,6 +82,31 @@
       .mdr {
         text-align: center;
       }
+      h2{
+        text-align: center;
+      }
+      @media screen and (max-width:500px) {
+        body{
+          background-color: red;
+        }
+        h1{
+          font-size: calc(1rem + 0.8vh);
+        }
+        form{
+          display: block;
+        }
+        input{
+          width: 100%;
+          text-align: center;
+        }
+        button{
+          display: flex;
+          margin: 5px auto;
+          width: 70%;
+          text-align: center;
+          justify-content: center;
+        }
+      }
     </style>
   </head>
   <body>
@@ -94,7 +118,7 @@
           type="text"
           name=""
           id="input"
-          placeholder="Nom du pokemon Ex: pikachu"
+          placeholder=" Nom du pokemon "
         />
         <button id="button">Rechercher</button>
       </form>
@@ -134,6 +158,9 @@
       <p>Vitesse: <span id="vit">65</span></p>
       <p>Point de vie: <span id="hp">39</span></p>
     </div>
+    <hr>
+    <br>
+    <h2>By Twilight-x</h2>
 
     <script>
       button.addEventListener("click", async (e) => {
@@ -200,7 +227,6 @@
       nomfr2.textContent = localStorage.getItem("fr");
       nomjp.textContent = localStorage.getItem("jp");
       category.textContent = localStorage.getItem("category");
-      const link = localStorage.getItem("pokemonepic");
       taille.textContent = localStorage.getItem("taille");
       poid.textContent = localStorage.getItem("poid");
       typename.textContent = localStorage.getItem("typename");
