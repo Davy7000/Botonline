@@ -1,8 +1,14 @@
+// Synapse-x panel bootstrap: save as start.js and run "node start.js"
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const SESSION = "";//votre session id 
+const SESSION = ""; // Replace with your actual session string
+
+if (!SESSION || SESSION === "YOUR_SESSION_HERE") {
+  console.error('❌ Set your SESSION at the top of start.js first. Get one at /pair.');
+  process.exit(1);
+}
 
 function run(command, options = {}) {
   try {
@@ -30,8 +36,8 @@ if (!fs.existsSync('./ffmpeg')) {
   console.log("⚡ FFmpeg already exists.");
 }
 
-if (!fs.existsSync('./SYNAPSE-X')) {
-  console.log("📥 Cloning Synapse X...");
+if (!fs.existsSync('./raganork-md')) {
+  console.log("📥 Cloning raganork-md...");
   run('git clone https://github.com/Davy7000/SYNAPSE-X');
 } else {
   console.log("🔄 SYNAPSE-X already cloned.");

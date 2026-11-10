@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNAPSE-X • Plugin Store & Gist Manager</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter & Fira Code) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0B0F19',
+                            card: '#111827',
+                            border: '#1F2937',
+                            accent: '#06B6D4', // Cyan
+                            purple: '#A855F7', // Neon Purple
+                            pink: '#EC4899',   // Pink
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0B0F19;
+            color: #F3F4F6;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0F19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1F2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06B6D4;
+        }
+
+        /* Neon Glow Utility */
+        .neon-border-cyan {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+        }
+        .neon-border-purple {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased">
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 px-5 py-3 rounded-xl bg-gray-900 border border-cyan-500/50 shadow-2xl text-cyan-400 font-medium">
+        <i id="toast-icon" class="fas fa-check-circle text-lg"></i>
+        <span id="toast-message">Notification message</span>
+    </div>
+
+    <!-- MAIN HEADER / NAVBAR -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-cyan-500/30">
+                    ⚡
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500">
+                        SYNAPSE-X
+                    </h1>
+                    <p class="text-xs text-gray-400 font-mono">PLUGIN HUB & GIST GENERATOR</p>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex items-center gap-3">
+                <button onclick="openModal('converter-modal')" class="px-4 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-medium text-sm transition-all flex items-center gap-2">
+                    <i class="fab fa-github"></i>
+                    <span>Convert Gist to Raw</span>
+                </button>
+                <button onclick="openModal('editor-modal')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 text-white font-semibold text-sm transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Ajouter un Plugin</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="relative py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div class="absolute inset-0 -z-10 flex items-center justify-center">
+            <div class="w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+            <div class="w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="text-center max-w-3xl mx-auto space-y-4">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Store Officiel des Plugins <span class="text-cyan-400">SYNAPSE-X</span>
+            </h2>
+            <p class="text-gray-400 text-sm sm:text-base">
+                Installez instantanément vos scripts sur votre bot WhatsApp avec la commande <code class="bg-gray-800 text-cyan-400 px-2 py-1 rounded border border-cyan-500/30 font-mono text-xs">.install &lt;url_raw&gt;</code>.
+            </p>
+        </div>
+
+        <!-- QUICK CONVERTER TOOLBAR -->
+        <div class="mt-8 max-w-2xl mx-auto glass-panel p-4 rounded-2xl border border-gray-800 shadow-2xl">
+            <label class="block text-xs font-mono text-cyan-400 uppercase tracking-wider mb-2 font-semibold">
+                ⚡ Convertisseur Rapide GitHub Gist ➔ Commande .install
+            </label>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <div class="relative flex-1">
+                    <input type="text" id="quick-gist-input" placeholder="https://gist.github.com/username/gist_id" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-200 focus:outline-none focus:border-cyan-500 transition-colors">
+                </div>
+                <button onclick="handleQuickConvert()" class="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold text-sm rounded-xl transition-all shadow-md shadow-cyan-500/20 whitespace-nowrap flex items-center justify-center gap-2">
+                    <i class="fas fa-bolt"></i>
+                    <span>Convertir & Copier</span>
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Collez n'importe quel lien GitHub Gist normal. Le lien sera automatiquement transformé au format <code class="text-gray-400 font-mono">/raw</code>.</p>
+        </div>
+    </section>
+
+    <!-- PLUGIN EXPLORER & CONTROLS -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+        
+        <!-- Search & Category Filters -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+            <!-- Search Input -->
+            <div class="relative w-full md:w-96">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input type="text" id="search-input" oninput="renderPlugins()" placeholder="Rechercher un plugin (nom, commande, auteur)..." class="w-full bg-gray-900 border border-gray-800 rounded-xl pl-11 pr-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-cyan-500 transition-colors">
+            </div>
+
+            <!-- Categories -->
+            <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 font-medium text-xs">
+                <button onclick="filterCategory('all')" class="cat-btn active px-4 py-2 rounded-xl bg-cyan-500 text-gray-950 font-bold transition-all whitespace-nowrap" data-cat="all">
+                    Tous
+                </button>
+                <button onclick="filterCategory('download')" class="cat-btn px-4 py-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white transition-all whitespace-nowrap" data-cat="download">
+                    🎵 Téléchargement
+                </button>
+                <button onclick="filterCategory('utility')" class="cat-btn px-4 py-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white transition-all whitespace-nowrap" data-cat="utility">
+                    🛠️ Utilitaires
+                </button>
+                <button onclick="filterCategory('group')" class="cat-btn px-4 py-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white transition-all whitespace-nowrap" data-cat="group">
+                    👥 Groupe
+                </button>
+                <button onclick="filterCategory('fun')" class="cat-btn px-4 py-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white transition-all whitespace-nowrap" data-cat="fun">
+                    🎮 Fun & Jeux
+                </button>
+            </div>
+        </div>
+
+        <!-- PLUGINS GRID -->
+        <div id="plugins-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards dynamic rendering -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-16 space-y-4">
+            <div class="w-16 h-16 mx-auto rounded-full bg-gray-800/50 flex items-center justify-center text-gray-500 text-2xl">
+                <i class="fas fa-box-open"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-300">Aucun plugin trouvé</h3>
+            <p class="text-sm text-gray-500 max-w-sm mx-auto">Essayez de modifier votre recherche ou ajoutez un nouveau plugin à la communauté.</p>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-800/80 bg-gray-950/50 py-8 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+            <div class="flex items-center gap-2 font-mono">
+                <span class="text-cyan-400 font-bold">SYNAPSE-X</span> • Bot Ecosystem & Extension Store
+            </div>
+            <div>
+                Compatible avec l'installateur natif Baileys <code class="text-purple-400 font-mono">.install &lt;url&gt;</code>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: VIEW CODE PREVIEW -->
+    <div id="code-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-gray-950/50">
+                <div class="flex items-center gap-3">
+                    <span id="modal-plugin-icon" class="text-xl">📜</span>
+                    <div>
+                        <h3 id="modal-plugin-name" class="font-bold text-white text-base">Plugin Code</h3>
+                        <p id="modal-plugin-pattern" class="text-xs text-cyan-400 font-mono">pattern: "..."</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('code-modal')" class="w-8 h-8 rounded-lg bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- Code Body -->
+            <div class="p-6 overflow-y-auto flex-1 bg-gray-950 font-mono text-xs text-gray-300 relative">
+                <pre><code id="modal-code-content" class="whitespace-pre-wrap"></code></pre>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-gray-800 flex items-center justify-between bg-gray-900">
+                <button id="modal-download-btn" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold transition-all flex items-center gap-2">
+                    <i class="fas fa-download"></i>
+                    <span>Télécharger .js</span>
+                </button>
+                <button id="modal-copy-install-btn" class="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-gray-950 text-xs font-bold transition-all shadow-md shadow-cyan-500/20 flex items-center gap-2">
+                    <i class="fas fa-copy"></i>
+                    <span>Copier Commande .install</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ADD NEW PLUGIN EDITOR -->
+    <div id="editor-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-gray-950/50">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-code text-cyan-400"></i>
+                    <h3 class="font-bold text-white text-base">Ajouter un Plugin à la Bibliothèque</h3>
+                </div>
+                <button onclick="closeModal('editor-modal')" class="w-8 h-8 rounded-lg bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- Form Body -->
+            <div class="p-6 overflow-y-auto space-y-4 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-400 font-semibold mb-1">Nom du Plugin *</label>
+                        <input type="text" id="new-title" placeholder="Ex: Music Downloader" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 font-semibold mb-1">Catégorie *</label>
+                        <select id="new-category" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-cyan-500">
+                            <option value="download">🎵 Téléchargement</option>
+                            <option value="utility">🛠️ Utilitaires</option>
+                            <option value="group">👥 Groupe</option>
+                            <option value="fun">🎮 Fun & Jeux</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-400 font-semibold mb-1">Auteur</label>
+                        <input type="text" id="new-author" placeholder="Ex: SYNAPSE Team" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 font-semibold mb-1">Lien GitHub Gist (Optionnel)</label>
+                        <input type="text" id="new-gist-url" placeholder="https://gist.github.com/..." class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-cyan-500 font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 font-semibold mb-1">Description courte</label>
+                    <input type="text" id="new-desc" placeholder="Ex: Permet de chercher et télécharger de la musique MP3" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-gray-200 focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-gray-400 font-semibold">Code du Plugin JavaScript *</label>
+                        <span class="text-[10px] text-cyan-400 font-mono">Le pattern sera détecté automatiquement</span>
+                    </div>
+                    <textarea id="new-code" rows="10" placeholder="'use strict';&#10;const { Module } = require('../main');&#10;..." class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-gray-200 font-mono text-xs focus:outline-none focus:border-cyan-500 leading-relaxed"></textarea>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-gray-800 flex items-center justify-end gap-3 bg-gray-900">
+                <button onclick="closeModal('editor-modal')" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 font-medium">Annuler</button>
+                <button onclick="saveNewPlugin()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold shadow-lg shadow-cyan-500/20">Enregistrer Plugin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: GIST CONVERTER STANDALONE -->
+    <div id="converter-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-gray-950/50">
+                <div class="flex items-center gap-2 text-cyan-400">
+                    <i class="fab fa-github text-lg"></i>
+                    <h3 class="font-bold text-white text-base">Gist Raw Link Formatter</h3>
+                </div>
+                <button onclick="closeModal('converter-modal')" class="w-8 h-8 rounded-lg bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block text-gray-400 font-semibold mb-1">Entrez l'URL GitHub Gist classique :</label>
+                    <input type="text" id="modal-gist-input" oninput="formatGistModal()" placeholder="https://gist.github.com/souravkl11/ca91042baeeb60fdeb9d060d0f8e584d" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-gray-200 font-mono focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="p-4 rounded-xl bg-gray-950 border border-gray-800 space-y-2">
+                    <span class="text-gray-500 uppercase tracking-wider font-mono text-[10px] block">Lien Raw Généré :</span>
+                    <div id="modal-gist-raw-output" class="text-cyan-400 font-mono break-all text-xs">https://.../raw</div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-cyan-950/30 border border-cyan-500/20 space-y-2">
+                    <span class="text-cyan-400 uppercase tracking-wider font-mono text-[10px] block">Commande Bot Prête à l'emploi :</span>
+                    <div id="modal-gist-cmd-output" class="text-white font-mono font-bold text-sm break-all">.install https://.../raw</div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-800 flex items-center justify-end gap-3 bg-gray-900">
+                <button onclick="copyModalInstallCmd()" class="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold rounded-xl shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+                    <i class="fas fa-copy"></i>
+                    <span>Copier la Commande</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // Default Pre-loaded Plugins List
+        const DEFAULT_PLUGINS = [
+            {
+                id: 'p1',
+                title: 'Music Search & Downloader',
+                category: 'download',
+                author: 'SYNAPSE Team',
+                desc: 'Recherche YouTube locale (yt-search) avec propositions de téléchargement MP3 & MP4.',
+                rawUrl: 'https://gist.github.com/souravkl11/ca91042baeeb60fdeb9d060d0f8e584d/raw',
+                code: `'use strict';\n\nconst { Module } = require("../main");\nconst axios = require("axios");\nconst yts = require("yt-search");\n\nModule({\n  pattern: "music ?(.*)",\n  fromMe: false,\n  desc: "Recherche un titre YouTube et génère les liens MP3/MP4",\n  use: "download"\n}, async (message, match) => {\n  const query = match[1]?.trim();\n  if (!query) return await message.sendReply("❌ Veuillez spécifier un titre !");\n  await message.sendReply("🔍 Recherche en cours...");\n  const result = await yts(query);\n  const video = result.videos?.[0];\n  if (!video) return await message.sendReply("❌ Aucune musique trouvée.");\n  await message.sendReply(\`🎵 *Titre:* \${video.title}\\n\\n.ytmp3 \${video.url}\\n.ytmp4 \${video.url}\`);\n});`
+            },
+            {
+                id: 'p2',
+                title: 'AutoAdmin Privilege Escalation',
+                category: 'group',
+                author: 'TWILIGHT모',
+                desc: 'Nomme automatiquement le membre admin si le bot possède déjà les privilèges du groupe.',
+                rawUrl: 'https://gist.github.com/souravkl11/autoadmin_synapse/raw',
+                code: `'use strict';\n\nconst { Module } = require("../main");\n\nModule({\n  pattern: "autoadmin",\n  fromMe: false,\n  desc: "Te nomme admin si le bot est administrateur",\n  use: "group"\n}, async (message) => {\n  if (!message.isGroup) return await message.sendReply("_❌ Réservé aux groupes !_");\n  const groupMetadata = await message.client.groupMetadata(message.jid);\n  await message.client.groupParticipantsUpdate(message.jid, [message.sender], "promote");\n  await message.sendReply("✅ Promu administrateur avec succès !");\n});`
+            },
+            {
+                id: 'p3',
+                title: 'Interactive Native Menu2',
+                category: 'utility',
+                author: 'OSS Company',
+                desc: 'Menu interactif avec boutons Baileys natifs et sous-menus par catégories.',
+                rawUrl: 'https://gist.github.com/souravkl11/menu2_native_flow/raw',
+                code: `'use strict';\n\nconst { Module } = require("../main");\nconst { generateWAMessageFromContent, generateMessageID } = require("@whiskeysockets/baileys");\n\nModule({\n  pattern: "menu2 ?(.*)",\n  fromMe: false,\n  use: "utility",\n  desc: "Affiche le menu interactif avec boutons natifs"\n}, async (message) => {\n  await message.sendReply("🌟 SYNAPSE-X INTERACTIVE MENU 🌟");\n});`
+            },
+            {
+                id: 'p4',
+                title: 'Quotes & Motivation Generator',
+                category: 'utility',
+                author: 'SYNAPSE Team',
+                desc: 'Génère des citations motivantes et inspirantes avec auteurs dans une carte stylée.',
+                rawUrl: 'https://gist.github.com/souravkl11/quote_styled/raw',
+                code: `'use strict';\n\nconst { Module } = require('../main');\n\nconst citations = [\n  { text: "La seule façon de faire du bon travail est d'aimer ce que vous faites.", author: "Steve Jobs" },\n  { text: "Je pense donc je suis.", author: "René Descartes" }\n];\n\nModule({\n  pattern: 'quote',\n  desc: 'Génère une citation inspirante et stylée',\n  use: 'utility'\n}, async (message) => {\n  const q = citations[Math.floor(Math.random() * citations.length)];\n  await message.sendReply(\`💬 « \${q.text} »\\n✍️ *Auteur :* _\${q.author}_\`);\n});`
+            }
+        ];
+
+        let plugins = [];
+        let activeCategory = 'all';
+
+        // Load plugins on init
+        window.onload = function() {
+            const saved = localStorage.getItem('synapse_plugins');
+            if (saved) {
+                try {
+                    plugins = JSON.parse(saved);
+                } catch(e) {
+                    plugins = DEFAULT_PLUGINS;
+                }
+            } else {
+                plugins = DEFAULT_PLUGINS;
+                localStorage.setItem('synapse_plugins', JSON.stringify(plugins));
+            }
+            renderPlugins();
+        };
+
+        // Render plugins grid
+        function renderPlugins() {
+            const grid = document.getElementById('plugins-grid');
+            const emptyState = document.getElementById('empty-state');
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+
+            grid.innerHTML = '';
+
+            const filtered = plugins.filter(p => {
+                const matchesCat = activeCategory === 'all' || p.category === activeCategory;
+                const matchesSearch = p.title.toLowerCase().includes(searchVal) ||
+                                      p.desc.toLowerCase().includes(searchVal) ||
+                                      p.author.toLowerCase().includes(searchVal);
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(plugin => {
+                // Extract pattern name from code using regex
+                const patternMatch = plugin.code.match(/pattern:\s*["']([^"']+)["']/);
+                const patternName = patternMatch ? patternMatch[1] : 'custom';
+
+                const card = document.createElement('div');
+                card.className = 'glass-panel rounded-2xl p-6 border border-gray-800 hover:border-cyan-500/40 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 shadow-xl';
+
+                const catBadge = getCategoryBadge(plugin.category);
+
+                card.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${catBadge.bg} ${catBadge.text}">
+                                ${catBadge.label}
+                            </span>
+                            <span class="text-[10px] font-mono text-gray-500 bg-gray-900 px-2 py-1 rounded-md">
+                                by ${escapeHtml(plugin.author || 'Anonyme')}
+                            </span>
+                        </div>
+
+                        <div>
+                            <h3 class="text-base font-bold text-white group-hover:text-cyan-400 transition-colors">
+                                ${escapeHtml(plugin.title)}
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-1 line-clamp-2">
+                                ${escapeHtml(plugin.desc)}
+                            </p>
+                        </div>
+
+                        <div class="bg-gray-950 p-2.5 rounded-xl border border-gray-800/80 font-mono text-[11px] text-cyan-400 flex items-center justify-between">
+                            <span class="truncate pr-2">pattern: "${escapeHtml(patternName)}"</span>
+                            <i class="fas fa-terminal text-gray-600"></i>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-800/60 flex flex-col gap-2">
+                        <button onclick="copyInstallCmd('${plugin.rawUrl}')" class="w-full py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-gray-950 font-bold text-xs transition-all border border-cyan-500/30 flex items-center justify-center gap-2">
+                            <i class="fas fa-download"></i>
+                            <span>Copier .install commande</span>
+                        </button>
+                        
+                        <div class="flex items-center gap-2">
+                            <button onclick="previewCode('${plugin.id}')" class="flex-1 py-2 rounded-xl bg-gray-800/60 hover:bg-gray-800 text-gray-300 text-xs font-semibold transition-all flex items-center justify-center gap-1.5">
+                                <i class="fas fa-code"></i>
+                                <span>Voir Code</span>
+                            </button>
+                            <button onclick="downloadJsFile('${plugin.title}', '${encodeURIComponent(plugin.code)}')" class="w-9 h-9 rounded-xl bg-gray-800/60 hover:bg-gray-800 text-gray-400 hover:text-white text-xs flex items-center justify-center transition-all" title="Télécharger .js">
+                                <i class="fas fa-file-arrow-down"></i>
+                            </button>
+                            <button onclick="deletePlugin('${plugin.id}')" class="w-9 h-9 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs flex items-center justify-center transition-all" title="Supprimer">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Category Badge Helper
+        function getCategoryBadge(cat) {
+            switch(cat) {
+                case 'download': return { label: '🎵 Téléchargement', bg: 'bg-purple-500/10', text: 'text-purple-400' };
+                case 'utility': return { label: '🛠️ Utilitaires', bg: 'bg-cyan-500/10', text: 'text-cyan-400' };
+                case 'group': return { label: '👥 Groupe', bg: 'bg-emerald-500/10', text: 'text-emerald-400' };
+                case 'fun': return { label: '🎮 Fun', bg: 'bg-pink-500/10', text: 'text-pink-400' };
+                default: return { label: '📌 Plugin', bg: 'bg-gray-500/10', text: 'text-gray-400' };
+            }
+        }
+
+        // Category Filter Switching
+        function filterCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'cat-btn active px-4 py-2 rounded-xl bg-cyan-500 text-gray-950 font-bold transition-all whitespace-nowrap';
+                } else {
+                    btn.className = 'cat-btn px-4 py-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white transition-all whitespace-nowrap';
+                }
+            });
+            renderPlugins();
+        }
+
+        // Convert Gist URL to Raw Link
+        function formatGistToRaw(url) {
+            if (!url) return '';
+            let formatted = url.trim();
+            if (formatted.includes('gist.github.com') || formatted.includes('gist.githubusercontent.com')) {
+                if (!formatted.endsWith('/raw')) {
+                    formatted = formatted.replace(/\/$/, "") + '/raw';
+                }
+            }
+            return formatted;
+        }
+
+        // Quick Convert Toolbar Handler
+        function handleQuickConvert() {
+            const input = document.getElementById('quick-gist-input').value;
+            if (!input) {
+                showToast("Veuillez entrer un lien GitHub Gist valid !", "error");
+                return;
+            }
+            const raw = formatGistToRaw(input);
+            const cmd = `.install ${raw}`;
+            copyToClipboard(cmd);
+            showToast("Commande copiée : " + cmd);
+        }
+
+        // Copy Install Command
+        function copyInstallCmd(rawUrl) {
+            const formattedRaw = formatGistToRaw(rawUrl);
+            const cmd = `.install ${formattedRaw}`;
+            copyToClipboard(cmd);
+            showToast("Commande copiée dans le presse-papier !");
+        }
+
+        // Preview Code Modal
+        function previewCode(id) {
+            const plugin = plugins.find(p => p.id === id);
+            if (!plugin) return;
+
+            const patternMatch = plugin.code.match(/pattern:\s*["']([^"']+)["']/);
+            const patternName = patternMatch ? patternMatch[1] : 'custom';
+
+            document.getElementById('modal-plugin-name').innerText = plugin.title;
+            document.getElementById('modal-plugin-pattern').innerText = `pattern: "${patternName}"`;
+            document.getElementById('modal-code-content').innerText = plugin.code;
+
+            document.getElementById('modal-copy-install-btn').onclick = function() {
+                copyInstallCmd(plugin.rawUrl);
+            };
+
+            document.getElementById('modal-download-btn').onclick = function() {
+                downloadJsFile(plugin.title, encodeURIComponent(plugin.code));
+            };
+
+            openModal('code-modal');
+        }
+
+        // Save New Plugin Form
+        function saveNewPlugin() {
+            const title = document.getElementById('new-title').value.trim();
+            const category = document.getElementById('new-category').value;
+            const author = document.getElementById('new-author').value.trim() || 'Communaute';
+            const gistUrl = document.getElementById('new-gist-url').value.trim();
+            const desc = document.getElementById('new-desc').value.trim() || 'Aucune description disponible.';
+            const code = document.getElementById('new-code').value.trim();
+
+            if (!title || !code) {
+                showToast("Veuillez remplir le titre et le code du plugin !", "error");
+                return;
+            }
+
+            const rawUrl = gistUrl ? formatGistToRaw(gistUrl) : 'https://gist.github.com/raw/custom_plugin';
+
+            const newPlugin = {
+                id: 'custom_' + Date.now(),
+                title,
+                category,
+                author,
+                desc,
+                rawUrl,
+                code
+            };
+
+            plugins.unshift(newPlugin);
+            localStorage.setItem('synapse_plugins', JSON.stringify(plugins));
+            renderPlugins();
+            closeModal('editor-modal');
+            showToast("Plugin ajouté à votre bibliothèque !");
+
+            // Reset Form
+            document.getElementById('new-title').value = '';
+            document.getElementById('new-desc').value = '';
+            document.getElementById('new-code').value = '';
+            document.getElementById('new-gist-url').value = '';
+        }
+
+        // Delete Plugin
+        function deletePlugin(id) {
+            if (confirm("Voulez-vous vraiment supprimer ce plugin ?")) {
+                plugins = plugins.filter(p => p.id !== id);
+                localStorage.setItem('synapse_plugins', JSON.stringify(plugins));
+                renderPlugins();
+                showToast("Plugin supprimé !");
+            }
+        }
+
+        // Download Code as .js File
+        function downloadJsFile(filename, encodedCode) {
+            const code = decodeURIComponent(encodedCode);
+            const blob = new Blob([code], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (filename.toLowerCase().replace(/[^a-z0-9]/g, '_') || 'plugin') + '.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Standalone Gist Converter Modal Formatter
+        function formatGistModal() {
+            const input = document.getElementById('modal-gist-input').value;
+            const raw = formatGistToRaw(input);
+            document.getElementById('modal-gist-raw-output').innerText = raw || 'https://.../raw';
+            document.getElementById('modal-gist-cmd-output').innerText = `.install ${raw || 'https://.../raw'}`;
+        }
+
+        function copyModalInstallCmd() {
+            const cmd = document.getElementById('modal-gist-cmd-output').innerText;
+            if (cmd.includes('...')) {
+                showToast("Entrez un lien Gist valide d'abord !", "error");
+                return;
+            }
+            copyToClipboard(cmd);
+            showToast("Commande copiée !");
+        }
+
+        // Modal Helpers
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Copy to Clipboard Utility
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+            } else {
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.style.position = "fixed";
+                textarea.style.opacity = "0";
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textarea);
+            }
+        }
+
+        // Toast Notification Utility
+        function showToast(msg, type = "success") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = msg;
+            if (type === "error") {
+                toastIcon.className = "fas fa-exclamation-circle text-red-400 text-lg";
+                toast.className = toast.className.replace('border-cyan-500/50 text-cyan-400', 'border-red-500/50 text-red-400');
+            } else {
+                toastIcon.className = "fas fa-check-circle text-cyan-400 text-lg";
+                toast.className = toast.className.replace('border-red-500/50 text-red-400', 'border-cyan-500/50 text-cyan-400');
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // HTML Escaping Utility
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
